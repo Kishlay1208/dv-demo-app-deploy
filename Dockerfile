@@ -1,18 +1,22 @@
-# 1. Use an official runtime as a parent image (Example for Node.js)
-FROM node:18-slim
+# 1. Use an official Python runtime as a parent image
+FROM python:3.9-slim
 
-# 2. Set the working directory
+# 2. Set the working directory in the container
 WORKDIR /app
 
-# 3. Copy package files and install dependencies
-COPY package*.json ./
-RUN npm install
+# 3. Copy the requirements file into the container
+COPY requirements.txt .
 
-# 4. Copy the rest of your code
+# 4. Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 5. Copy the rest of the application code
 COPY . .
 
-# 5. Expose the port your app runs on (usually 8080 for GCP)
+# 6. Cloud Run listens on port 8080 by default
+ENV PORT 8080
 EXPOSE 8080
 
-# 6. Command to run the app
-CMD [ "npm", "start" ]
+# 7. Run the application
+# We use gunicorn for a stable production environment
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 app:app
